@@ -25,7 +25,7 @@ class _BLEDevicesScreenState extends State<BLEDevicesScreen> {
         setState(() {
           if(!devices.contains(device)) {
             devices.add(device);
-          }          
+          }
         });
       });
     });
@@ -89,10 +89,14 @@ class _HomePageState extends State<HomePage> {
   String xData = 'Loading...';
   String yData = 'Loading...';
   String zData = 'Loading...';
+  String tempData = 'Loading...';
+  String spoData = 'Loading...';
 
   final flutterReactiveBle = FlutterReactiveBle();
 
   final serviceUuid = Uuid.parse('082b91ae-e83c-11e8-9f32-f2801f1b9fd1');
+  final tempServiceUuid = Uuid.parse('00001809-0000-1000-8000-00805F9B34FB');
+  final spoServiceUuid = Uuid.parse('00001822-0000-1000-8000-00805F9B34FB');
 
   final xCharacteristicUuid =
       Uuid.parse('082b9438-e83c-11e8-9f32-f2801f1b9fd1');
@@ -100,6 +104,8 @@ class _HomePageState extends State<HomePage> {
       Uuid.parse('082b9622-e83c-11e8-9f32-f2801f1b9fd1');
   final zCharacteristicUuid =
       Uuid.parse('082b976c-e83c-11e8-9f32-f2801f1b9fd1');
+  final tempCharacteristicUuid = Uuid.parse('00002A1C-0000-1000-8000-00805F9B34FB');
+  final spoCharacteristicUuid = Uuid.parse('00002A5F-0000-1000-8000-00805F9B34FB');
 
   void subscribeToCharacteristic() {
     final xCharacteristic = QualifiedCharacteristic(
@@ -114,6 +120,14 @@ class _HomePageState extends State<HomePage> {
         characteristicId: zCharacteristicUuid,
         serviceId: serviceUuid,
         deviceId: widget.deviceId);
+    final tempCharacteristic = QualifiedCharacteristic(
+        characteristicId: tempCharacteristicUuid,
+        serviceId: tempServiceUuid,
+        deviceId: widget.deviceId);
+    /*final spoCharacteristic = QualifiedCharacteristic(
+        characteristicId: spoCharacteristicUuid,
+        serviceId: spoServiceUuid,
+        deviceId: widget.deviceId);*/
 
     flutterReactiveBle
         .subscribeToCharacteristic(xCharacteristic)
@@ -136,6 +150,22 @@ class _HomePageState extends State<HomePage> {
           zData = _bytesToFloat(data).toString();
         });
     });
+    flutterReactiveBle
+        .subscribeToCharacteristic(tempCharacteristic)
+        .listen((data) {
+        setState(() {
+          tempData = _bytesToFloat(data).toString();
+        });
+    });
+    /*
+    flutterReactiveBle
+        .subscribeToCharacteristic(spoCharacteristic)
+        .listen((data) {
+        setState(() {
+          spoData = _bytesToFloat(data).toString();
+        });
+    });
+    */
   }
 
   double _bytesToFloat(List<int> data) {
@@ -175,6 +205,16 @@ class _HomePageState extends State<HomePage> {
             Card(
               child: ListTile(
                 title: Text('Z: $zData'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                title: Text('Temp: $tempData'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                title: Text('SpO2: $spoData'),
               ),
             ),
           ],
