@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -191,19 +193,47 @@ class _HomePageState extends State<HomePage> {
   final ecgCharacteristicUuid =
       Uuid.parse('123e4567-e89b-12d3-a456-426614174001');
 
+  void connectAndSubscribe() {
+    flutterReactiveBle.connectToDevice(
+        id: widget.deviceId,
+        /* servicesWithCharacteristicsToDiscover: {
+          Uuid.parse('123e4567-e89b-12d3-a456-426614174000'): [ // ECG Service
+            Uuid.parse('123e4567-e89b-12d3-a456-426614174001') // ECG Characteristic
+          ],
+          Uuid.parse('00001809-0000-1000-8000-00805F9B34FB'): [ // Temperature Service
+            Uuid.parse('00002A1C-0000-1000-8000-00805F9B34FB')
+          ],
+          Uuid.parse('082b91ae-e83c-11e8-9f32-f2801f1b9fd1'): [ // Gyro Service
+            Uuid.parse('082b9438-e83c-11e8-9f32-f2801f1b9fd1'), // X Characteristic
+            Uuid.parse('082b9622-e83c-11e8-9f32-f2801f1b9fd1'), // Y Characteristic
+            Uuid.parse('082b976c-e83c-11e8-9f32-f2801f1b9fd1') // Z Characteristic
+          ]
+        }, */
+        connectionTimeout: const Duration(seconds: 10),
+        ).listen((connectionState) {
+          if(connectionState.toString() == "connected") {
+            subscribeToCharacteristic();
+          } else if (connectionState.toString() == "disconnected") {
+            // TODO
+          }
+        }, onError: (Object error) {
+          // TODO
+        });
+  }
+
   void subscribeToCharacteristic() {
-    final xCharacteristic = QualifiedCharacteristic(
-        characteristicId: xCharacteristicUuid,
-        serviceId: gyroServiceUuid,
-        deviceId: widget.deviceId);
-    final yCharacteristic = QualifiedCharacteristic(
-        characteristicId: yCharacteristicUuid,
-        serviceId: gyroServiceUuid,
-        deviceId: widget.deviceId);
-    final zCharacteristic = QualifiedCharacteristic(
-        characteristicId: zCharacteristicUuid,
-        serviceId: gyroServiceUuid,
-        deviceId: widget.deviceId);
+    // final xCharacteristic = QualifiedCharacteristic(
+    //     characteristicId: xCharacteristicUuid,
+    //     serviceId: tempServiceUuid,
+    //     deviceId: widget.deviceId);
+    // final yCharacteristic = QualifiedCharacteristic(
+    //     characteristicId: yCharacteristicUuid,
+    //     serviceId: tempServiceUuid,
+    //     deviceId: widget.deviceId);
+    // final zCharacteristic = QualifiedCharacteristic(
+    //     characteristicId: zCharacteristicUuid,
+    //     serviceId: tempServiceUuid,
+    //     deviceId: widget.deviceId);
     final tempCharacteristic = QualifiedCharacteristic(
         characteristicId: tempCharacteristicUuid,
         serviceId: tempServiceUuid,
@@ -217,27 +247,28 @@ class _HomePageState extends State<HomePage> {
         serviceId: spoServiceUuid,
         deviceId: widget.deviceId);*/
 
-    flutterReactiveBle
-        .subscribeToCharacteristic(xCharacteristic)
-        .listen((data) {
-      setState(() {
-        xData = _bytesToFloat(data).toString();
-      });
-    });
-    flutterReactiveBle
-        .subscribeToCharacteristic(yCharacteristic)
-        .listen((data) {
-      setState(() {
-        yData = _bytesToFloat(data).toString();
-      });
-    });
-    flutterReactiveBle
-        .subscribeToCharacteristic(zCharacteristic)
-        .listen((data) {
-      setState(() {
-        zData = _bytesToFloat(data).toString();
-      });
-    });
+    
+    // flutterReactiveBle
+    //     .subscribeToCharacteristic(xCharacteristic)
+    //     .listen((data) {
+    //   setState(() {
+    //     xData = _bytesToFloat(data).toString();
+    //   });
+    // });
+    // flutterReactiveBle
+    //     .subscribeToCharacteristic(yCharacteristic)
+    //     .listen((data) {
+    //   setState(() {
+    //     yData = _bytesToFloat(data).toString();
+    //   });
+    // });
+    // flutterReactiveBle
+    //     .subscribeToCharacteristic(zCharacteristic)
+    //     .listen((data) {
+    //   setState(() {
+    //     zData = _bytesToFloat(data).toString();
+    //   });
+    // });
     flutterReactiveBle
         .subscribeToCharacteristic(tempCharacteristic)
         .listen((data) {
@@ -249,6 +280,7 @@ class _HomePageState extends State<HomePage> {
         .subscribeToCharacteristic(ecgCharacteristic)
         .listen((data) {
       setState(() {
+        dynamicLineChart.addValue(_bytesToFloat(data));
         spoData = _bytesToFloat(data).toString();
       });
     });
@@ -288,21 +320,21 @@ class _HomePageState extends State<HomePage> {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Card(
-                child: ListTile(
-                  title: Text('X: $xData'),
-                ),
-              ),
-              Card(
-                child: ListTile(
-                  title: Text('Y: $yData'),
-                ),
-              ),
-              Card(
-                child: ListTile(
-                  title: Text('Z: $zData'),
-                ),
-              ),
+              // Card(
+              //   child: ListTile(
+              //     title: Text('X: $xData'),
+              //   ),
+              // ),
+              // Card(
+              //   child: ListTile(
+              //     title: Text('Y: $yData'),
+              //   ),
+              // ),
+              // Card(
+              //   child: ListTile(
+              //     title: Text('Z: $zData'),
+              //   ),
+              // ),
               Card(
                 child: ListTile(
                   title: Text('Temp: $tempData'),
@@ -310,7 +342,7 @@ class _HomePageState extends State<HomePage> {
               ),
               Card(
                 child: ListTile(
-                  title: Text('SpO2: $spoData'),
+                  title: Text('ECG: $spoData'),
                 ),
               ),
               SizedBox(
