@@ -159,6 +159,8 @@ class _DynamicLineChartState extends State<DynamicLineChart> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(50),
         child: LineChart(
+          duration: Duration
+              .zero, //Disables the animation, which causes some issues with the ECG line
           LineChartData(
               lineBarsData: [
                 LineChartBarData(
@@ -170,8 +172,8 @@ class _DynamicLineChartState extends State<DynamicLineChart> {
                     color: Colors.red,
                     dotData: FlDotData(show: false)),
               ],
-              minY: -2424829,
-              maxY: 2097154,
+              minY: -1570000,
+              maxY: -327000,
               minX: 0,
               maxX: 120,
               clipData: const FlClipData.none(),
@@ -228,10 +230,10 @@ class _HomePageState extends State<HomePage> {
       String timestamp = DateFormat('HH:mm:ss').format(DateTime.now());
       messages.add('[$timestamp] $message');
       print('Message added: [$timestamp] $message');
-    });    
+    });
   }
 
-  void connectAndSubscribe() {
+  void connect() {
     consoleMessage("Kapcsolódás ehhez: ${widget.deviceId}");
     flutterReactiveBle
         .connectToDevice(
@@ -239,13 +241,10 @@ class _HomePageState extends State<HomePage> {
       //connectionTimeout: const Duration(seconds: 35),
     )
         .listen((connectionState) {
-          
-        consoleMessage(connectionState.toString());
-      if (connectionState.toString() == "connected") {
+      if (connectionState.connectionState == DeviceConnectionState.connected) {
         consoleMessage("Kapcsolat létrejött");
-        consoleMessage(connectionState.toString());
         subscribeToCharacteristic();
-      } else if (connectionState.toString() == "disconnected") {
+      } else if (connectionState.connectionState == DeviceConnectionState.disconnected) {
         consoleMessage('Kapcsolat bontva');
       }
     }, onError: (Object error) {
@@ -292,8 +291,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    subscribeToCharacteristic();
-    //connectAndSubscribe();
+    connect();
   }
 
   @override
@@ -308,7 +306,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(
           child: Column(
-            children: <Widget>[              
+            children: <Widget>[
               Card(
                 color: const Color(0xFF499CE9),
                 child: Padding(
