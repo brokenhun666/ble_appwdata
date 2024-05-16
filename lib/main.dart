@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   return runApp(MaterialApp(
@@ -51,9 +52,9 @@ class _BLEDevicesScreenState extends State<BLEDevicesScreen> {
       showDialog(
         context: context,
         builder: (BuildContext context) => AlertDialog(
-          title: const Text('Location Permission'),
+          title: const Text('Helyzetmeghatározás engedélykérés'),
           content: const Text(
-              'This app needs location permission to scan for BLE devices.'),
+              'Ennek az alkalmazásnak szüksége van erre az engedélyre, hogy BLE eszközöket scan-eljen.'),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
@@ -69,7 +70,7 @@ class _BLEDevicesScreenState extends State<BLEDevicesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('BLE Devices'),
+        title: const Text('BLE Eszközök'),
         backgroundColor: const Color(0xFF145DA0),
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -91,7 +92,7 @@ class _BLEDevicesScreenState extends State<BLEDevicesScreen> {
             child: ListTile(
               title: Text(
                   devices[index].name.isEmpty
-                      ? 'Unknown name'
+                      ? 'Ismeretlen név'
                       : devices[index].name,
                   style: TextStyle(
                       fontSize: 16,
@@ -158,6 +159,8 @@ class _DynamicLineChartState extends State<DynamicLineChart> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(50),
         child: LineChart(
+          duration: Duration
+              .zero, //Disables the animation, which causes some issues with the ECG line
           LineChartData(
               lineBarsData: [
                 LineChartBarData(
@@ -206,9 +209,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final DynamicLineChart dynamicLineChart = DynamicLineChart();
+  List<String> messages = [];
 
-  String tempData = 'Loading...';
-  String spoData = 'Loading...';
+  String tempData = 'Töltés...';
+  String spoData = 'Töltés...';
   double ecgData = 0;
 
   final flutterReactiveBle = FlutterReactiveBle();
@@ -221,17 +225,27 @@ class _HomePageState extends State<HomePage> {
   final ecgCharacteristicUuid =
       Uuid.parse('123e4567-e89b-12d3-a456-426614174001');
 
-  void connectAndSubscribe() {
+  void consoleMessage(String message) {
+    setState(() {
+      String timestamp = DateFormat('HH:mm:ss').format(DateTime.now());
+      messages.add('[$timestamp] $message');
+      print('Message added: [$timestamp] $message');
+    });
+  }
+
+  void connect() {
+    consoleMessage("Kapcsolódás ehhez: ${widget.deviceId}");
     flutterReactiveBle
         .connectToDevice(
       id: widget.deviceId,
-      connectionTimeout: const Duration(seconds: 35),
+      //connectionTimeout: const Duration(seconds: 35),
     )
         .listen((connectionState) {
-      if (connectionState.toString() == "connected") {
+      if (connectionState.connectionState == DeviceConnectionState.connected) {
+        consoleMessage("Kapcsolat létrejött");
         subscribeToCharacteristic();
-      } else if (connectionState.toString() == "disconnected") {
-        // TODO
+      } else if (connectionState.connectionState == DeviceConnectionState.disconnected) {
+        consoleMessage('Kapcsolat bontva');
       }
     }, onError: (Object error) {
       // TODO
@@ -239,6 +253,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void subscribeToCharacteristic() {
+    consoleMessage("Feliratkozás...");
     final tempCharacteristic = QualifiedCharacteristic(
         characteristicId: tempCharacteristicUuid,
         serviceId: tempServiceUuid,
@@ -276,14 +291,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    subscribeToCharacteristic();
+    connect();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vital parameters'),
+        title: const Text('Vitális paraméterek'),
         backgroundColor: const Color(0xFF145DA0),
         foregroundColor: Colors.white,
       ),
@@ -291,7 +306,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(
           child: Column(
-            children: <Widget>[              
+            children: <Widget>[
               Card(
                 color: const Color(0xFF499CE9),
                 child: Padding(
@@ -299,7 +314,7 @@ class _HomePageState extends State<HomePage> {
                   child: ListTile(
                     leading: Image.asset('assets/images/thermometer.png'),
                     title: Text(
-                      'Temperature: $tempData °C',
+                      'Testhőmérséklet: $tempData °C',
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
@@ -322,6 +337,42 @@ class _HomePageState extends State<HomePage> {
                 height: 300,
                 width: 400,
                 child: dynamicLineChart,
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Container(
+                  width: 350,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue,
+                      width: 3,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      children: <Widget>[
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: messages.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                title: Text(
+                                  messages[index],
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                                contentPadding: EdgeInsets.all(0),
+                                visualDensity: VisualDensity(vertical: -4),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
