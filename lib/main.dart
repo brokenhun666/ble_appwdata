@@ -178,7 +178,21 @@ class _DynamicLineChartState extends State<DynamicLineChart> {
               maxX: 120,
               clipData: const FlClipData.none(),
               titlesData: const FlTitlesData(
-                show: false,
+                show: true,
+                leftTitles: AxisTitles(
+                  axisNameSize: 20,
+                  axisNameWidget: Text('mV', style: TextStyle(color: Colors.black, fontSize: 14),),                  
+                ),
+                bottomTitles: AxisTitles(
+                  axisNameSize: 20,
+                  axisNameWidget: Text('minta', style: TextStyle(color: Colors.black, fontSize: 14),)
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false)
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false)
+                )
               ),
               gridData: const FlGridData(
                   show: true,
@@ -218,18 +232,18 @@ class _HomePageState extends State<HomePage> {
   final flutterReactiveBle = FlutterReactiveBle();
 
   final tempServiceUuid = Uuid.parse('00001809-0000-1000-8000-00805f9b34fb');
-  final ecgServiceUuid = Uuid.parse('123e4567-e89b-12d3-a456-426614174000');
+  final ecgServiceUuid = Uuid.parse('0000180d-0000-1000-8000-00805f9b34fb');
 
   final tempCharacteristicUuid =
       Uuid.parse('00002a1c-0000-1000-8000-00805f9b34fb');
   final ecgCharacteristicUuid =
-      Uuid.parse('123e4567-e89b-12d3-a456-426614174001');
+      Uuid.parse('00002a37-0000-1000-8000-00805f9b34fb');
 
   void consoleMessage(String message) {
     setState(() {
       String timestamp = DateFormat('HH:mm:ss').format(DateTime.now());
       messages.add('[$timestamp] $message');
-      print('Message added: [$timestamp] $message');
+      //print('Message added: [$timestamp] $message'); //For console debug purposes
     });
   }
 
@@ -238,13 +252,13 @@ class _HomePageState extends State<HomePage> {
     flutterReactiveBle
         .connectToDevice(
       id: widget.deviceId,
-      //connectionTimeout: const Duration(seconds: 35),
     )
         .listen((connectionState) {
       if (connectionState.connectionState == DeviceConnectionState.connected) {
         consoleMessage("Kapcsolat létrejött");
         subscribeToCharacteristic();
-      } else if (connectionState.connectionState == DeviceConnectionState.disconnected) {
+      } else if (connectionState.connectionState ==
+          DeviceConnectionState.disconnected) {
         consoleMessage('Kapcsolat bontva');
       }
     }, onError: (Object error) {
@@ -315,7 +329,7 @@ class _HomePageState extends State<HomePage> {
                     leading: Image.asset('assets/images/thermometer.png'),
                     title: Text(
                       'Testhőmérséklet: $tempData °C',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
                 ),
@@ -345,7 +359,7 @@ class _HomePageState extends State<HomePage> {
                   height: 200,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: Colors.blue,
+                      color: const Color(0xFF145DA0),
                       width: 3,
                     ),
                     borderRadius: BorderRadius.circular(12),
